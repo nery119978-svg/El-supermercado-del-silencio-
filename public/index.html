@@ -285,7 +285,7 @@ const PI2=Math.PI/2;
 const vcols=(xs,rows)=>{const r=[];xs.forEach(x=>rows.forEach(y=>r.push([x,y[0],30,y[1]])));return r;};
 const LEVELS=[
 {name:'Súper La Esquina',diff:'Fácil',w:1440,h:960,sp:62,chase:60,sight:1,zoneT:30,drain:34,fog:.075,
- quest:{walls:[[0,124,90,12],[150,124,110,12],[250,20,12,116]],door:[90,124,60,12],key:[1150,760],card:[150,70],sw:[[1426,640],[1000,14]],note:[720,70],owalls:[[1040,124,60,12],[1160,124,140,12],[1040,20,12,116],[1290,20,12,116]],odoor:[1100,124,60,12],onote:[200,45],xkey:[1170,60],fuses:[[250,355],[520,355],[960,355],[1200,355],[250,475],[560,475],[1000,475],[650,235],[1230,595],[720,595],[900,735],[300,735],[120,500],[1330,350],[720,880],[1300,880]]},
+ quest:{walls:[[0,124,90,12],[150,124,110,12],[250,20,12,116]],door:[90,124,60,12],key:[1150,760],card:[150,70],sw:[[1426,640],[1000,14]],note:[720,70],owalls:[[1040,124,60,12],[1160,124,140,12],[1040,20,12,116],[1290,20,12,116]],odoor:[1100,124,60,12],onote:[200,45],xkey:[1170,60],fuses:[[250,355],[520,355],[960,355],[1200,355],[250,475],[560,475],[1000,475],[650,235],[1230,595],[720,595],[900,735],[300,735],[120,500],[1330,350],[560,880],[1300,880]]},
  shelves:[
   [180,160,420,30],[840,160,420,30],
   [180,280,170,30],[430,280,170,30],[840,280,170,30],[1090,280,170,30],
@@ -346,7 +346,7 @@ const MAPK=1.6;
     L.shelves=L.shelves.map(sc);L.counters=L.counters.map(sc);
     L.patrol=L.patrol.map(q=>[Math.round(q[0]*K),Math.round(q[1]*K)]);
     L.items.forEach(it=>{it.x=Math.round(it.x*K);it.y=Math.round(it.y*K);});
-    if(L.quest){const q=L.quest;q.walls=q.walls.map(sc);q.door=sc(q.door);q.key=sc(q.key);q.card=sc(q.card);q.note=sc(q.note);q.sw=q.sw.map(sc);q.fuses=q.fuses.map(sc);q.owalls=q.owalls.map(sc);q.odoor=sc(q.odoor);q.onote=sc(q.onote);q.xkey=sc(q.xkey);}
+    if(L.quest){const q=L.quest;q.walls=q.walls.map(sc);q.door=sc(q.door);q.key=sc(q.key);q.card=sc(q.card);q.note=sc(q.note);q.sw=q.sw.map(sc).map(p=>[p[0]>L.w*.9?L.w-12:p[0],p[1]<60?12:p[1]]);q.fuses=q.fuses.map(sc);q.owalls=q.owalls.map(sc);q.odoor=sc(q.odoor);q.onote=sc(q.onote);q.xkey=sc(q.xkey);}
     L.lockers.forEach(l=>{
       const nL=l.x<=24,nR=l.x+l.w>=w0-24,nT=l.y<=24,nB=l.y+l.h>=h0-24;
       l.x=nL?l.x:nR?L.w-(w0-l.x):Math.round(l.x*K);
@@ -356,6 +356,7 @@ const MAPK=1.6;
 })();
 
 let QW=[],QD=null,QD2=null,QM=null;
+function qTables(L){if(!L.quest)return[];const q=L.quest;return [q.key,q.card,q.note,q.onote].concat(q.fuses).map(p=>[p[0]-14,p[1]-14,28,28]);}
 function circRect(px,py,r,rc){
   const cx=Math.max(rc[0],Math.min(px,rc[0]+rc[2])),cy=Math.max(rc[1],Math.min(py,rc[1]+rc[3]));
   const dx=px-cx,dy=py-cy;return dx*dx+dy*dy<r*r;
@@ -596,7 +597,9 @@ function buildLevelMeshes(){
   });
   QM=null;
   if(LV.quest){
-    const q=LV.quest,wm=L(0x39464b);
+    const q=LV.quest,wm=L(0x39464b),tmat=L(0x6b4a1c,{emissive:0x140e04});
+    const table=p=>{const m=new THREE.Mesh(new THREE.BoxGeometry(.62,.92,.62),tmat);m.position.set(p[0]*S,.46,p[1]*S);lvl.add(m);};
+    [q.key,q.card,q.note,q.onote].concat(q.fuses).forEach(table);
     q.walls.forEach(w=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w[2]*S,3.2,w[3]*S),wm);m.position.set((w[0]+w[2]/2)*S,1.6,(w[1]+w[3]/2)*S);lvl.add(m);});
     const d=q.door,dm=new THREE.Mesh(new THREE.BoxGeometry(d[2]*S,2.6,d[3]*S),L(0x6b4a1c,{emissive:0x1a1206}));dm.position.set((d[0]+d[2]/2)*S,1.3,(d[1]+d[3]/2)*S);lvl.add(dm);
     const ds=new THREE.Mesh(new THREE.PlaneGeometry(d[2]*S,.5),new THREE.MeshBasicMaterial({map:signTex('ALMACÉN','#2a1c08','#f3d98a',512,128)}));ds.position.set((d[0]+d[2]/2)*S,2.9,(d[1]+d[3]+1)*S);lvl.add(ds);
@@ -605,14 +608,14 @@ function buildLevelMeshes(){
     const kr=new THREE.Mesh(new THREE.TorusGeometry(.09,.025,8,16),L(0xe8d44d,{emissive:0x6a5a10}));kr.position.y=.1;key.add(kr);
     const kb=new THREE.Mesh(new THREE.BoxGeometry(.04,.26,.03),L(0xe8d44d,{emissive:0x6a5a10}));kb.position.y=-.08;key.add(kb);
     const kt=new THREE.Mesh(new THREE.BoxGeometry(.1,.04,.03),L(0xe8d44d,{emissive:0x6a5a10}));kt.position.set(.05,-.16,0);key.add(kt);
-    const kg=glowM(0xffe27a);kg.scale.set(1,1,1);key.add(kg);key.position.set(q.key[0]*S,1.05,q.key[1]*S);lvl.add(key);
+    const kg=glowM(0xffe27a);kg.scale.set(1,1,1);key.add(kg);key.position.set(q.key[0]*S,1.12,q.key[1]*S);lvl.add(key);
     const card=new THREE.Group();
     const cb=new THREE.Mesh(new THREE.BoxGeometry(.3,.19,.02),L(0x3fa7e8,{emissive:0x0e3350}));card.add(cb);
     const cs=new THREE.Mesh(new THREE.BoxGeometry(.3,.04,.022),L(0x111111));cs.position.y=.03;card.add(cs);
-    const cg=glowM(0x7fd0ff);cg.scale.set(1,1,1);card.add(cg);card.position.set(q.card[0]*S,1.0,q.card[1]*S);lvl.add(card);
+    const cg=glowM(0x7fd0ff);cg.scale.set(1,1,1);card.add(cg);card.position.set(q.card[0]*S,1.05,q.card[1]*S);lvl.add(card);
     const note=new THREE.Group();
     const nb=new THREE.Mesh(new THREE.BoxGeometry(.3,.4,.01),L(0xf2ecd0,{emissive:0x4a4630}));note.add(nb);
-    const ng=glowM(0xfff0a0);ng.scale.set(1.1,1.1,1);note.add(ng);note.position.set(q.note[0]*S,1.1,q.note[1]*S);lvl.add(note);
+    const ng=glowM(0xfff0a0);ng.scale.set(1.1,1.1,1);note.add(ng);note.position.set(q.note[0]*S,1.15,q.note[1]*S);lvl.add(note);
     const sw=q.sw.map((p,i)=>{
       const left=p[0]<W/2,top=p[1]<60,g=new THREE.Group();
       const body=new THREE.Mesh(new THREE.BoxGeometry(.5,.8,.18),L(0x3b4a4f));g.add(body);
@@ -620,7 +623,7 @@ function buildLevelMeshes(){
       const lamp=new THREE.Mesh(new THREE.BoxGeometry(.14,.1,.04),new THREE.MeshBasicMaterial({color:0xe0432f}));lamp.position.set(0,.3,.1);g.add(lamp);
       const pl=new THREE.Mesh(new THREE.PlaneGeometry(.46,.16),new THREE.MeshBasicMaterial({map:signTex('SW '+(i+1),'#222','#e8d44d',128,48)}));pl.position.set(0,-.3,.1);g.add(pl);
       const lg=glowM(0xff6a55);lg.scale.set(.5,.5,1);lg.position.set(0,.3,.14);g.add(lg);
-      g.position.set(p[0]*S+(left?.12:(p[0]>W/2?-.12:0)),1.5,p[1]*S+(top?.12:0));
+      g.position.set(top?p[0]*S:(left?.1:W*S-.1),1.5,top?.1:p[1]*S);
       g.rotation.y=top?0:(left?Math.PI/2:-Math.PI/2);
       lvl.add(g);return{g,lamp,lg};
     });
@@ -634,20 +637,20 @@ function buildLevelMeshes(){
       const body=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.22,10),L(0xdfe6e8,{emissive:0x303a3c}));body.rotation.z=Math.PI/2;g.add(body);
       [-.12,.12].forEach(x=>{const cap=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.05,10),L(0xe8a030,{emissive:0x5a3a08}));cap.rotation.z=Math.PI/2;cap.position.x=x;g.add(cap);});
       const gl=glowM(0xffb040);gl.scale.set(.9,.9,1);g.add(gl);
-      g.position.set(p[0]*S,1.0,p[1]*S);lvl.add(g);return g;
+      g.position.set(p[0]*S,1.05,p[1]*S);lvl.add(g);return g;
     });
     q.owalls.forEach(w=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w[2]*S,3.2,w[3]*S),L(0x4a3a2c));m.position.set((w[0]+w[2]/2)*S,1.6,(w[1]+w[3]/2)*S);lvl.add(m);});
     const od=q.odoor,odm=new THREE.Mesh(new THREE.BoxGeometry(od[2]*S,2.6,od[3]*S),L(0x2a2f3a,{emissive:0x0a0c12}));odm.position.set((od[0]+od[2]/2)*S,1.3,(od[1]+od[3]/2)*S);lvl.add(odm);
     const ods=new THREE.Mesh(new THREE.PlaneGeometry(od[2]*S,.5),new THREE.MeshBasicMaterial({map:signTex('GERENTE','#14161c','#e8d44d',512,128)}));ods.position.set((od[0]+od[2]/2)*S,2.9,(od[1]+od[3]+1)*S);lvl.add(ods);
     const ox=(q.owalls[0][0]+q.owalls[3][0]+q.owalls[3][2])/2;
-    const desk=new THREE.Mesh(new THREE.BoxGeometry(2.2,.9,.9),L(0x6b4a1c));desk.position.set(q.xkey[0]*S,.45,(q.xkey[1]+34)*S);lvl.add(desk);
-    const rug=new THREE.Mesh(new THREE.BoxGeometry(2.6,.02,1.8),L(0x5a1c1c));rug.position.set(q.xkey[0]*S,.02,(q.xkey[1]+50)*S);lvl.add(rug);
+    const desk=new THREE.Mesh(new THREE.BoxGeometry(2.2,.9,.9),L(0x6b4a1c));desk.position.set(q.xkey[0]*S,.45,q.xkey[1]*S);lvl.add(desk);
+    const rug=new THREE.Mesh(new THREE.BoxGeometry(2.6,.02,1.8),L(0x5a1c1c));rug.position.set(q.xkey[0]*S,.02,(q.xkey[1]+30)*S);lvl.add(rug);
     const olt=new THREE.PointLight(0xffd9a0,.9,7,1.6);olt.position.set(q.xkey[0]*S,2.4,q.xkey[1]*S);lvl.add(olt);
     const xk=new THREE.Group();
     [[new THREE.TorusGeometry(.1,.03,8,16),0,.12],[new THREE.BoxGeometry(.05,.3,.04),0,-.08],[new THREE.BoxGeometry(.12,.05,.04),.06,-.18]].forEach(a=>{const m=new THREE.Mesh(a[0],L(0xd04040,{emissive:0x501010}));m.position.set(a[1],a[2],0);xk.add(m);});
-    const xg=glowM(0xff6a55);xg.scale.set(1.1,1.1,1);xk.add(xg);xk.position.set(q.xkey[0]*S,1.0,q.xkey[1]*S);lvl.add(xk);
+    const xg=glowM(0xff6a55);xg.scale.set(1.1,1.1,1);xk.add(xg);xk.position.set(q.xkey[0]*S,1.1,q.xkey[1]*S);lvl.add(xk);
     const on=new THREE.Group();const nb2=new THREE.Mesh(new THREE.BoxGeometry(.3,.4,.01),L(0xd8c8ff,{emissive:0x403a60}));on.add(nb2);
-    const og=glowM(0xc8b0ff);og.scale.set(1.1,1.1,1);on.add(og);on.position.set(q.onote[0]*S,1.1,q.onote[1]*S);lvl.add(on);
+    const og=glowM(0xc8b0ff);og.scale.set(1.1,1.1,1);on.add(og);on.position.set(q.onote[0]*S,1.15,q.onote[1]*S);lvl.add(on);
     QM={door:dm,ds,key,card,note,sw,pd,fz,odm,ods,xk,on};
   }
 }
@@ -655,7 +658,7 @@ function loadLevel(n){
   curLevel=n;LV=LEVELS[n];
   shelves=LV.shelves;counters=LV.counters;lockers=LV.lockers;ITEMS=LV.items;patrol=LV.patrol;
   QW=LV.quest?LV.quest.walls.concat(LV.quest.owalls):[];QD=LV.quest?LV.quest.door:null;QD2=LV.quest?LV.quest.odoor:null;
-  obstacles=shelves.concat(counters,[freezer],lockers.map(l=>[l.x,l.y,l.w,l.h]),QW,QD?[QD]:[],QD2?[QD2]:[]);
+  obstacles=shelves.concat(counters,[freezer],lockers.map(l=>[l.x,l.y,l.w,l.h]),QW,QD?[QD]:[],QD2?[QD2]:[],qTables(LV));
   setWorld(LV.w||960,LV.h||640);
   rebuildGrid();buildWorld();buildLevelMeshes();
   scene.fog.density=LV.fog*1.3;$('ttl').textContent=LV.name;
@@ -784,15 +787,15 @@ function qVis(){
 }
 function qNear(){
   if(!G.q||!LV.quest)return null;const q=LV.quest,Q=G.q,p=G.p,st=qStage();
-  const nr=(a,r)=>Math.hypot(p.x-a[0],p.y-a[1])<(r||46);
-  for(let j=0;j<4;j++){const id=Q.fzc[j];if(id!==undefined&&Q.fzg.indexOf(id)<0&&nr(q.fuses[id],46))return 'fz'+id;}
+  const nr=(a,r)=>Math.hypot(p.x-a[0],p.y-a[1])<(r||58);
+  for(let j=0;j<4;j++){const id=Q.fzc[j];if(id!==undefined&&Q.fzg.indexOf(id)<0&&nr(q.fuses[id],58))return 'fz'+id;}
   if(Q.open&&!Q.onote&&nr(q.onote))return 'onote';
-  if(!Q.oopen&&nr([q.odoor[0]+q.odoor[2]/2,q.odoor[1]+q.odoor[3]/2],58))return 'odoor';
+  if(!Q.oopen&&nr([q.odoor[0]+q.odoor[2]/2,q.odoor[1]+q.odoor[3]/2],66))return 'odoor';
   if(Q.oopen&&!Q.xkey&&nr(q.xkey))return 'xkey';
   if(st>=1&&!Q.key&&nr(q.key))return 'key';
-  if(!Q.open&&nr([q.door[0]+q.door[2]/2,q.door[1]+q.door[3]/2],58))return 'door';
+  if(!Q.open&&nr([q.door[0]+q.door[2]/2,q.door[1]+q.door[3]/2],66))return 'door';
   if(!Q.card&&nr(q.card))return 'card';
-  for(let i=0;i<2;i++)if(!Q.sw[i]&&nr(q.sw[i],52))return 'sw'+i;
+  for(let i=0;i<2;i++)if(!Q.sw[i]&&nr(q.sw[i],64))return 'sw'+i;
   if(st>=4&&!Q.note&&nr(q.note))return 'note';
   return null;
 }
@@ -1195,7 +1198,7 @@ function interact(){
   if(G.mini){tap();return;}
   if(G.pick){pickPress();return;}
   if(G.kp){closeKp();return;}
-  if(G.call&&G.call.phase==='ring'){answerCall();return;}
+  if(G.call&&G.call.phase==='ring'&&!(nearItem()||(G.q&&qNear()))){answerCall();return;}
   if(G.rose&&Math.hypot(G.p.x-G.m.x,G.p.y-G.m.y)<130){giveRose();return;}
   const p=G.p,m=G.m;
   if(p.hidden>=0){
